@@ -1,0 +1,48 @@
+# scripts/token_tracking.py
+
+import requests
+import pandas as pd
+
+def fetch_token_transactions(api_url, token_address, start_block, end_block):
+    """
+    Fetch token transactions from the blockchain API.
+    
+    :param api_url: Base URL of the blockchain API
+    :param token_address: Address of the token contract
+    :param start_block: Start block number
+    :param end_block: End block number
+    :return: DataFrame with token transactions
+    """
+    params = {
+        'module': 'account',
+        'action': 'tokentx',
+        'contractaddress': token_address,
+        'startblock': start_block,
+        'endblock': end_block,
+        'sort': 'asc'
+    }
+    response = requests.get(api_url, params=params)
+    response.raise_for_status()
+    data = response.json().get('result', [])
+    df = pd.DataFrame(data)
+    return df
+
+def get_balance(df, address):
+    """
+    Get the balance of a specific address from token transactions.
+    
+    :param df: DataFrame with token transactions
+    :param address: Address to check the balance
+    :return: Balance of the address
+    """
+    balance = df[df['to'] == address]['value'].astype(float).sum()
+    return balance
+
+# Example usage:
+# api_url = 'https://api.blockchain.example.com'
+# token_address = '0x1234567890abcdef'
+# start_block = 1000000
+# end_block = 1000100
+# transactions = fetch_token_transactions(api_url, token_address, start_block, end_block)
+# balance = get_balance(transactions, '0xabcdefabcdefabcdef')
+# print(balance)
